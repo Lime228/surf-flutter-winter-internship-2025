@@ -117,7 +117,7 @@ class _FilterSheetState extends State<FilterSheet> {
           child: Column(
             children: [
               AppBar(
-                title: const Text('Фильтры и сортировка'),
+                title: const Text('Фильтры'),
                 backgroundColor: Colors.green,
                 automaticallyImplyLeading: false,
                 actions: [

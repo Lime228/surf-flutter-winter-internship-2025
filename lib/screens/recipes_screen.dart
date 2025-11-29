@@ -85,6 +85,23 @@ class _RecipesScreenState extends State<RecipesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Рецепты'),
+        backgroundColor: Colors.green,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const CreateRecipeScreen(),
+                ),
+              );
+              _loadRecipes();
+            },
+          ),
+        ],
+      ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : isError
@@ -150,19 +167,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const CreateRecipeScreen(),
-            ),
-          );
-          _loadRecipes();
-        },
-        backgroundColor: Colors.green,
-        child: const Icon(Icons.add),
-      ),
     );
   }
+
 
 }

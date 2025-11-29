@@ -152,52 +152,47 @@ class _FruitListScreenState extends State<FruitListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Фрукты'),
+        backgroundColor: Colors.green,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_alt),
+            onPressed: () async {
+              final result = await showModalBottomSheet<Map<String, dynamic>>(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => FilterSheet(
+                  minCalories: minCalories,
+                  maxCalories: maxCalories,
+                  maxSugar: maxSugar,
+                  maxFat: maxFat,
+                  sortType: sortType,
+                ),
+              );
+              if (result != null) {
+                setState(() {
+                  minCalories = result['minCalories'];
+                  maxCalories = result['maxCalories'];
+                  maxSugar = result['maxSugar'];
+                  maxFat = result['maxFat'];
+                  sortType = result['sortType'] ?? 0;
+                  filteredFruits = _filterAndSortFruits(allFruits);
+                });
+              }
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () async {
+              await _loadFruits();
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
-          // Панель с кнопками фильтров и сортировки
-          Container(
-            color: Colors.green,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.filter_alt, color: Colors.white),
-                  onPressed: () async {
-                    final result = await showModalBottomSheet<Map<String, dynamic>>(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (context) => FilterSheet(
-                        minCalories: minCalories,
-                        maxCalories: maxCalories,
-                        maxSugar: maxSugar,
-                        maxFat: maxFat,
-                        sortType: sortType,
-                      ),
-                    );
-
-                    if (result != null) {
-                      setState(() {
-                        minCalories = result['minCalories'];
-                        maxCalories = result['maxCalories'];
-                        maxSugar = result['maxSugar'];
-                        maxFat = result['maxFat'];
-                        sortType = result['sortType'] ?? 0;
-                        filteredFruits = _filterAndSortFruits(allFruits);
-                      });
-                    }
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh, color: Colors.white),
-                  onPressed: () async {
-                    await _loadFruits();
-                  },
-                ),
-              ],
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
@@ -313,4 +308,5 @@ class _FruitListScreenState extends State<FruitListScreen> {
       ),
     );
   }
+
 }

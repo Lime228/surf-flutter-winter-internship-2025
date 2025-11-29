@@ -57,46 +57,53 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : isError
-        ? Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('Произошла ошибка'),
-          ElevatedButton(
-            onPressed: _loadFavoritesAndFruits,
-            child: const Text('Перезагрузить'),
-          ),
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Избранное'),
+        backgroundColor: Colors.green,
       ),
-    )
-        : favoriteFruits.isEmpty
-        ? const Center(child: Text('Вы пока ничего не добавили в избранное'))
-        : ListView.builder(
-      itemCount: favoriteFruits.length,
-      itemBuilder: (context, index) {
-        final fruit = favoriteFruits[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: ListTile(
-            title: Text(fruit.name),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => _removeFavorite(fruit.id),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : isError
+          ? Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Произошла ошибка'),
+            ElevatedButton(
+              onPressed: _loadFavoritesAndFruits,
+              child: const Text('Перезагрузить'),
             ),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => FruitDetailScreen(fruit: fruit),
-                ),
-              );
-            },
-          ),
-        );
-      },
+          ],
+        ),
+      )
+          : favoriteFruits.isEmpty
+          ? const Center(child: Text('Вы пока ничего не добавили в избранное'))
+          : ListView.builder(
+        itemCount: favoriteFruits.length,
+        itemBuilder: (context, index) {
+          final fruit = favoriteFruits[index];
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: ListTile(
+              title: Text(fruit.name),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () => _removeFavorite(fruit.id),
+              ),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => FruitDetailScreen(fruit: fruit),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
     );
   }
+
 
 }
