@@ -17,4 +17,16 @@ class FavoritesService {
     final jsonString = json.encode(ids.toList());
     await prefs.setString(_key, jsonString);
   }
+
+  Future<void> addFavorite(int id) async {
+    final ids = await loadFavorites();
+    ids.add(id);
+    await saveFavorites(ids);
+  }
+
+  Future<void> removeFavorite(int id) async {
+    final ids = await loadFavorites();
+    ids.remove(id);
+    await saveFavorites(ids);
+  }
 }

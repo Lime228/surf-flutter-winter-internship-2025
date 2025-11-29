@@ -13,7 +13,7 @@ class FavoritesScreen extends StatefulWidget {
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
   final ApiService _apiService = ApiService();
-  final FavoritesService _favoritesService = FavoritesService();
+  final FavoritesService _favoriteService = FavoritesService();
 
   Set<int> favoriteIds = {};
   List<Fruit> favoriteFruits = [];
@@ -23,22 +23,20 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   void initState() {
     super.initState();
-    _loadFavorites();
+    _loadFavoritesAndFruits();
   }
 
-  Future<void> _loadFavorites() async {
+  Future<void> _loadFavoritesAndFruits() async {
     setState(() {
       isLoading = true;
       isError = false;
     });
 
     try {
-      final ids = await _favoritesService.loadFavorites();
+      favoriteIds = await _favoriteService.loadFavorites();
       final result = await _apiService.getAllFruits();
+      favoriteFruits = result.fruits.where((f) => favoriteIds.contains(f.id)).toList();
       setState(() {
-        favoriteIds = ids;
-        // Отфильтровать только избранные фрукты
-        favoriteFruits = result.fruits.where((f) => favoriteIds.contains(f.id)).toList();
         isLoading = false;
       });
     } catch (_) {
@@ -54,7 +52,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       favoriteIds.remove(fruitId);
       favoriteFruits.removeWhere((f) => f.id == fruitId);
     });
-    _favoritesService.saveFavorites(favoriteIds);
+    _favoriteService.removeFavorite(fruitId);
   }
 
   @override
@@ -73,7 +71,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           children: [
             const Text('Произошла ошибка'),
             ElevatedButton(
-              onPressed: _loadFavorites,
+              onPressed: _loadFavoritesAndFruits,
               child: const Text('Перезагрузить'),
             ),
           ],
