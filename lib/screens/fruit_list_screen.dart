@@ -25,6 +25,7 @@ class _FruitListScreenState extends State<FruitListScreen> {
   List<Fruit> allFruits = [];
   List<Fruit> filteredFruits = [];
   bool isLoading = true;
+  bool isError = false;
   final TextEditingController _searchController = TextEditingController();
 
   late StreamSubscription<ConnectivityResult> _connectivitySubscription;
@@ -85,6 +86,7 @@ class _FruitListScreenState extends State<FruitListScreen> {
   Future<void> _loadFruits() async {
     setState(() {
       isLoading = true;
+      isError = false;
     });
     try {
       final result = await _apiService.getAllFruits();
@@ -97,9 +99,8 @@ class _FruitListScreenState extends State<FruitListScreen> {
     } catch (e) {
       setState(() {
         isLoading = false;
+        isError = true;
       });
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Ошибка загрузки: $e')));
     }
   }
 
@@ -153,52 +154,49 @@ class _FruitListScreenState extends State<FruitListScreen> {
     return Scaffold(
       body: Column(
         children: [
-          AppBar(
-            title: const Text('Фрукты'),
-            backgroundColor: Colors.green,
-            foregroundColor: Colors.white,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.filter_alt),
-                onPressed: () async {
-                  final result = await showModalBottomSheet<Map<String, double?>>(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (context) => FilterSheet(
-                      minCalories: minCalories,
-                      maxCalories: maxCalories,
-                      maxSugar: maxSugar,
-                      maxFat: maxFat,
-                    ),
-                  );
-                  if (result != null) {
-                    setState(() {
-                      minCalories = result['minCalories'];
-                      maxCalories = result['maxCalories'];
-                      maxSugar = result['maxSugar'];
-                      maxFat = result['maxFat'];
-                      filteredFruits = _filterAndSortFruits(allFruits);
-                    });
-                  }
-                },
-              ),
-              PopupMenuButton<int>(
-                icon: const Icon(Icons.sort),
-                onSelected: _changeSort,
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: 0, child: Text('A-Z')),
-                  const PopupMenuItem(value: 1, child: Text('Z-A')),
-                  const PopupMenuItem(value: 2, child: Text('По калориям (возрастание)')),
-                  const PopupMenuItem(value: 3, child: Text('По калориям (убывание))')),
-                ],
-              ),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: () async {
-                  await _loadFruits();
-                },
-              ),
-            ],
+          // Панель с кнопками фильтров и сортировки
+          Container(
+            color: Colors.green,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.filter_alt, color: Colors.white),
+                  onPressed: () async {
+                    final result = await showModalBottomSheet<Map<String, dynamic>>(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => FilterSheet(
+                        minCalories: minCalories,
+                        maxCalories: maxCalories,
+                        maxSugar: maxSugar,
+                        maxFat: maxFat,
+                        sortType: sortType,
+                      ),
+                    );
+
+                    if (result != null) {
+                      setState(() {
+                        minCalories = result['minCalories'];
+                        maxCalories = result['maxCalories'];
+                        maxSugar = result['maxSugar'];
+                        maxFat = result['maxFat'];
+                        sortType = result['sortType'] ?? 0;
+                        filteredFruits = _filterAndSortFruits(allFruits);
+                      });
+                    }
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: Colors.white),
+                  onPressed: () async {
+                    await _loadFruits();
+                  },
+                ),
+              ],
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -224,6 +222,20 @@ class _FruitListScreenState extends State<FruitListScreen> {
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
+                : isError
+                ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Произошла ошибка'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadFruits,
+                    child: const Text('Повторить'),
+                  ),
+                ],
+              ),
+            )
                 : filteredFruits.isEmpty
                 ? Center(
               child: Column(
@@ -264,7 +276,6 @@ class _FruitListScreenState extends State<FruitListScreen> {
                         const Icon(Icons.arrow_forward_ios),
                       ],
                     ),
-
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
