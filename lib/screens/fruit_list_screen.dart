@@ -5,6 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 import '../models/fruit.dart';
 import '../services/api_service.dart';
+import '../services/favorite_service.dart';
 import '../screens/fruit_detail_screen.dart';
 import '../screens/filter_sheet.dart';
 
@@ -17,6 +18,9 @@ class FruitListScreen extends StatefulWidget {
 
 class _FruitListScreenState extends State<FruitListScreen> {
   final ApiService _apiService = ApiService();
+
+  final FavoritesService _favoriteService = FavoritesService();
+  Set<int> favoriteIds = {};
 
   List<Fruit> allFruits = [];
   List<Fruit> filteredFruits = [];
@@ -40,6 +44,7 @@ class _FruitListScreenState extends State<FruitListScreen> {
   void initState() {
     super.initState();
     _loadFruits();
+    _loadFavorites();
     _searchController.addListener(_onSearchChanged);
     _connectivitySubscription =
         Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
@@ -54,6 +59,27 @@ class _FruitListScreenState extends State<FruitListScreen> {
     _searchController.dispose();
     _connectivitySubscription.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadFavorites() async {
+    final ids = await _favoriteService.loadFavorites();
+    setState(() {
+      favoriteIds = ids;
+    });
+  }
+
+  void _toggleFavorite(int fruitId) async {
+    if (favoriteIds.contains(fruitId)) {
+      await _favoriteService.removeFavorite(fruitId);
+      setState(() {
+        favoriteIds.remove(fruitId);
+      });
+    } else {
+      await _favoriteService.addFavorite(fruitId);
+      setState(() {
+        favoriteIds.add(fruitId);
+      });
+    }
   }
 
   Future<void> _loadFruits() async {
@@ -225,7 +251,20 @@ class _FruitListScreenState extends State<FruitListScreen> {
                     ),
                     title: Text(fruit.name),
                     subtitle: Text('${fruit.family} • ${fruit.nutritions.calories.toStringAsFixed(0)} ккал'),
-                    trailing: const Icon(Icons.arrow_forward_ios),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            favoriteIds.contains(fruit.id) ? Icons.favorite : Icons.favorite_border,
+                            color: Colors.red,
+                          ),
+                          onPressed: () => _toggleFavorite(fruit.id),
+                        ),
+                        const Icon(Icons.arrow_forward_ios),
+                      ],
+                    ),
+
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
