@@ -1,11 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'screens/filter_sheet.dart';
-import 'services/api_service.dart';
-import 'models/fruit.dart';
-import 'screens/fruit_detail_screen.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:surf/screens/filter_sheet.dart';
+import 'package:surf/services/favorite_service.dart';
+import 'models/fruit.dart';
+import 'services/api_service.dart';
+import 'screens/fruit_detail_screen.dart';
 
 
 void main() {
@@ -41,28 +42,36 @@ class _FruitListScreenState extends State<FruitListScreen> {
   List<Fruit> filteredFruits = [];
   bool isLoading = true;
   final TextEditingController _searchController = TextEditingController();
+
+  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
+  bool isOnline = true;
+
+  String dataSource = 'Загрузка...';
+
   double? minCalories;
   double? maxCalories;
   double? maxSugar;
   double? maxFat;
-  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
-  bool isOnline = true;
+
+  final FavoritesService _favoritesService = FavoritesService();
+  Set<int> favoriteIds = {};
 
 
-
-  // Сортировка: 0 - по имени A-Z, 1 - по имени Z-A, 2 - по калориям
+  /// 0 - A-Z, 1 - Z-A, 2 - calories asc, 3 - calories desc
   int sortType = 0;
 
   @override
   void initState() {
     super.initState();
+    _loadFavorites();
     _loadFruits();
     _searchController.addListener(_onSearchChanged);
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
-      setState(() {
-        isOnline = result != ConnectivityResult.none;
-      });
-    });
+    _connectivitySubscription =
+        Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
+          setState(() {
+            isOnline = result != ConnectivityResult.none;
+          });
+        });
   }
 
 
@@ -73,13 +82,43 @@ class _FruitListScreenState extends State<FruitListScreen> {
     super.dispose();
   }
 
+  void _loadFavorites() async {
+    final ids = await _favoritesService.loadFavorites();
+    setState(() {
+      favoriteIds = ids;
+    });
+  }
+
+  void _addFavorite(int fruitId) {
+    setState(() {
+      favoriteIds.add(fruitId);
+    });
+    _favoritesService.saveFavorites(favoriteIds);
+  }
+
+  void _removeFavorite(int fruitId) {
+    setState(() {
+      favoriteIds.remove(fruitId);
+    });
+    _favoritesService.saveFavorites(favoriteIds);
+  }
+
+  bool _isFavorite(int fruitId) {
+    return favoriteIds.contains(fruitId);
+  }
+
+
 
   Future<void> _loadFruits() async {
+    setState(() {
+      isLoading = true;
+    });
     try {
-      final fruitList = await _apiService.getAllFruits();
+      final result = await _apiService.getAllFruits();
       setState(() {
-        allFruits = fruitList;
-        filteredFruits = _sortFruits(fruitList);
+        allFruits = result.fruits;
+        filteredFruits = _filterAndSortFruits(allFruits);
+        dataSource = result.source;
         isLoading = false;
       });
     } catch (e) {
@@ -261,20 +300,26 @@ class _FruitListScreenState extends State<FruitListScreen> {
           ),
           if (!isOnline)
             Container(
+              width: double.infinity,
               color: Colors.red.shade700,
-              height: 24,
-              alignment: Alignment.center,
+              padding: const EdgeInsets.all(6),
               child: const Text(
                 'Нет соединения с сетью',
                 style: TextStyle(color: Colors.white),
+                textAlign: TextAlign.center,
               ),
             ),
-
+          Container(
+            width: double.infinity,
+            color: Colors.grey.shade300,
+            padding: const EdgeInsets.all(6),
+            child: Text(
+              dataSource,
+              style: const TextStyle(color: Colors.black87),
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _loadFruits,
-        child: const Icon(Icons.refresh),
       ),
     );
   }
