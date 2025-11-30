@@ -8,6 +8,7 @@ import '../services/api_service.dart';
 import '../services/favorite_service.dart';
 import '../screens/fruit_detail_screen.dart';
 import '../screens/filter_sheet.dart';
+import '../theme/app_theme.dart';
 
 class FruitListScreen extends StatefulWidget {
   const FruitListScreen({super.key});
@@ -246,31 +247,14 @@ class _FruitListScreenState extends State<FruitListScreen> {
               ),
             )
                 : ListView.builder(
+              padding: const EdgeInsets.only(bottom: 16),
               itemCount: filteredFruits.length,
               itemBuilder: (context, index) {
                 final fruit = filteredFruits[index];
+                final isFavorite = favoriteIds.contains(fruit.id);
+
                 return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.green[100],
-                      child: Text(fruit.name[0].toUpperCase()),
-                    ),
-                    title: Text(fruit.name),
-                    subtitle: Text('${fruit.family} • ${fruit.nutritions.calories.toStringAsFixed(0)} ккал'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            favoriteIds.contains(fruit.id) ? Icons.favorite : Icons.favorite_border,
-                            color: Colors.red,
-                          ),
-                          onPressed: () => _toggleFavorite(fruit.id),
-                        ),
-                        const Icon(Icons.arrow_forward_ios),
-                      ],
-                    ),
+                  child: InkWell(
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -278,10 +262,73 @@ class _FruitListScreenState extends State<FruitListScreen> {
                         ),
                       );
                     },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  fruit.name,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  fruit.family,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Icon(Icons.local_fire_department,
+                                        size: 16,
+                                        color: Colors.orange[700]
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${fruit.nutritions.calories.toStringAsFixed(0)} ккал',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey[700],
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                                  color: isFavorite ? Colors.red : Colors.grey,
+                                ),
+                                onPressed: () => _toggleFavorite(fruit.id),
+                              ),
+                              Icon(Icons.chevron_right, color: Colors.grey[400]),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               },
-            ),
+            )
           ),
           if (!isOnline)
             Container(

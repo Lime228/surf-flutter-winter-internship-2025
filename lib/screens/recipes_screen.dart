@@ -3,6 +3,7 @@ import '../models/recipe.dart';
 import '../models/fruit.dart';
 import '../services/recipe_service.dart';
 import '../services/api_service.dart';
+import '../theme/app_theme.dart';
 import 'create_recipe_screen.dart';
 
 class RecipesScreen extends StatefulWidget {
@@ -15,7 +16,6 @@ class RecipesScreen extends StatefulWidget {
 class _RecipesScreenState extends State<RecipesScreen> {
   final RecipeService _recipeService = RecipeService();
   final ApiService _apiService = ApiService();
-
   List<Recipe> recipes = [];
   List<Fruit> allFruits = [];
   bool isLoading = true;
@@ -32,7 +32,6 @@ class _RecipesScreenState extends State<RecipesScreen> {
       isLoading = true;
       isError = false;
     });
-
     try {
       final loadedRecipes = await _recipeService.loadRecipes();
       final result = await _apiService.getAllFruits();
@@ -87,7 +86,6 @@ class _RecipesScreenState extends State<RecipesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Рецепты'),
-        backgroundColor: Colors.green,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -109,22 +107,60 @@ class _RecipesScreenState extends State<RecipesScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Произошла ошибка'),
-            ElevatedButton(
+            Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            const Text(
+              'Произошла ошибка',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
               onPressed: _loadRecipes,
-              child: const Text('Перезагрузить'),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Перезагрузить'),
             ),
           ],
         ),
       )
           : recipes.isEmpty
-          ? const Center(child: Text('Создайте свой первый рецепт'))
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.restaurant_menu, size: 80, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'Создайте свой первый рецепт',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const CreateRecipeScreen(),
+                  ),
+                );
+                _loadRecipes();
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Создать рецепт'),
+            ),
+          ],
+        ),
+      )
           : ListView.builder(
+        padding: const EdgeInsets.only(top: 8, bottom: 16),
         itemCount: recipes.length,
         itemBuilder: (context, index) {
           final recipe = recipes[index];
           final fruits = _getFruitsForRecipe(recipe);
           final nutrition = _calculateNutrition(fruits);
+
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Padding(
@@ -133,33 +169,109 @@ class _RecipesScreenState extends State<RecipesScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Text(
                           recipe.name,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteRecipe(recipe.id),
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Удалить рецепт?'),
+                              content: Text('Вы уверены, что хотите удалить "${recipe.name}"?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Отмена'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    _deleteRecipe(recipe.id);
+                                  },
+                                  child: const Text('Удалить', style: TextStyle(color: Colors.red)),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(recipe.description),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Состав: ${fruits.map((f) => f.name).join(', ')}',
-                    style: const TextStyle(fontStyle: FontStyle.italic),
+                  if (recipe.description.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      recipe.description,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.lightGreen.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.restaurant, size: 16, color: Colors.grey[700]),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Состав:',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          fruits.map((f) => f.name).join(', '),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Калории: ${nutrition['calories']!.toStringAsFixed(0)} • '
-                        'Жир: ${nutrition['fat']!.toStringAsFixed(1)}г • '
-                        'Сахар: ${nutrition['sugar']!.toStringAsFixed(1)}г',
-                    style: TextStyle(color: Colors.grey[700]),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      _buildNutritionChip(
+                        Icons.local_fire_department,
+                        '${nutrition['calories']!.toStringAsFixed(0)} ккал',
+                        Colors.orange,
+                      ),
+                      _buildNutritionChip(
+                        Icons.opacity,
+                        '${nutrition['fat']!.toStringAsFixed(1)}г жиров',
+                        Colors.amber,
+                      ),
+                      _buildNutritionChip(
+                        Icons.cake,
+                        '${nutrition['sugar']!.toStringAsFixed(1)}г сахара',
+                        Colors.pink,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -170,5 +282,29 @@ class _RecipesScreenState extends State<RecipesScreen> {
     );
   }
 
-
+  Widget _buildNutritionChip(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: color.withOpacity(0.9),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class FilterSheet extends StatefulWidget {
   final double? minCalories;
@@ -28,38 +29,43 @@ class _FilterSheetState extends State<FilterSheet> {
   late int _selectedSortType;
   String? _selectedPreset;
 
-  final Map<String, Map<String, dynamic>> _presets = {
-    'Завтрак': {
-      'minCalories': 40.0,
-      'maxCalories': 80.0,
-      'minCarbs': 10.0,
-      'maxSugar': 12.0,
-      'maxFat': 0.5,
-    },
-    'Тренировка': {
-      'minCalories': 50.0,
-      'maxCalories': 100.0,
-      'minCarbs': 12.0,
-      'maxFat': 0.3,
-    },
-    'Сытость': {
-      'minCalories': 50.0,
-      'maxCalories': 90.0,
-      'minCarbs': 10.0,
-      'maxCarbs': 15.0,
-      'maxSugar': 10.0,
-      'minProtein': 0.5,
-    },
-    'Перекус': {
-      'maxCalories': 50.0,
-      'maxSugar': 7.0,
-      'maxFat': 0.4,
-    },
-    'Диета': {
-      'maxCalories': 40.0,
-      'maxSugar': 6.0,
-      'maxFat': 0.3,
-    },
+  final Map<String, PresetData> _presets = {
+    'Завтрак': PresetData(
+      minCalories: 40.0,
+      maxCalories: 80.0,
+      maxSugar: 12.0,
+      maxFat: 0.5,
+      icon: Icons.wb_sunny,
+      color: Colors.orange,
+    ),
+    'Тренировка': PresetData(
+      minCalories: 50.0,
+      maxCalories: 100.0,
+      maxFat: 0.3,
+      icon: Icons.fitness_center,
+      color: Colors.blue,
+    ),
+    'Сытость': PresetData(
+      minCalories: 50.0,
+      maxCalories: 90.0,
+      maxSugar: 10.0,
+      icon: Icons.restaurant,
+      color: Colors.green,
+    ),
+    'Перекус': PresetData(
+      maxCalories: 50.0,
+      maxSugar: 7.0,
+      maxFat: 0.4,
+      icon: Icons.cookie,
+      color: Colors.brown,
+    ),
+    'Диета': PresetData(
+      maxCalories: 40.0,
+      maxSugar: 6.0,
+      maxFat: 0.3,
+      icon: Icons.eco,
+      color: Colors.teal,
+    ),
   };
 
   @override
@@ -85,10 +91,10 @@ class _FilterSheetState extends State<FilterSheet> {
     final preset = _presets[presetName]!;
     setState(() {
       _selectedPreset = presetName;
-      _minCaloriesController.text = preset['minCalories']?.toString() ?? '';
-      _maxCaloriesController.text = preset['maxCalories']?.toString() ?? '';
-      _maxSugarController.text = preset['maxSugar']?.toString() ?? '';
-      _maxFatController.text = preset['maxFat']?.toString() ?? '';
+      _minCaloriesController.text = preset.minCalories?.toString() ?? '';
+      _maxCaloriesController.text = preset.maxCalories?.toString() ?? '';
+      _maxSugarController.text = preset.maxSugar?.toString() ?? '';
+      _maxFatController.text = preset.maxFat?.toString() ?? '';
     });
   }
 
@@ -116,100 +122,200 @@ class _FilterSheetState extends State<FilterSheet> {
           ),
           child: Column(
             children: [
-              AppBar(
-                title: const Text('Фильтры'),
-                backgroundColor: Colors.green,
-                automaticallyImplyLeading: false,
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
+              // AppBar
+              Container(
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryGreen,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                child: SafeArea(
+                  bottom: false,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            TextButton(
+                              onPressed: _clearFilters,
+                              child: const Text(
+                                'Сбросить',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            const Text(
+                              'Фильтры',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop({
+                                  'minCalories': _minCaloriesController.text.isNotEmpty
+                                      ? double.tryParse(_minCaloriesController.text)
+                                      : null,
+                                  'maxCalories': _maxCaloriesController.text.isNotEmpty
+                                      ? double.tryParse(_maxCaloriesController.text)
+                                      : null,
+                                  'maxSugar': _maxSugarController.text.isNotEmpty
+                                      ? double.tryParse(_maxSugarController.text)
+                                      : null,
+                                  'maxFat': _maxFatController.text.isNotEmpty
+                                      ? double.tryParse(_maxFatController.text)
+                                      : null,
+                                  'sortType': _selectedSortType,
+                                });
+                              },
+                              child: const Text(
+                                'Готово',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        height: 4,
+                        width: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                   ),
-                ],
+                ),
               ),
+
+              // Содержимое
               Expanded(
                 child: ListView(
                   controller: scrollController,
                   padding: const EdgeInsets.all(16),
                   children: [
-                    const Text(
-                      'Сортировка',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
+                    // Сортировка
+                    const Row(
                       children: [
-                        ChoiceChip(
-                          label: const Text('A-Z'),
-                          selected: _selectedSortType == 0,
-                          onSelected: (selected) {
-                            setState(() => _selectedSortType = 0);
-                          },
-                        ),
-                        ChoiceChip(
-                          label: const Text('Z-A'),
-                          selected: _selectedSortType == 1,
-                          onSelected: (selected) {
-                            setState(() => _selectedSortType = 1);
-                          },
-                        ),
-                        ChoiceChip(
-                          label: const Text('Калории ↑'),
-                          selected: _selectedSortType == 2,
-                          onSelected: (selected) {
-                            setState(() => _selectedSortType = 2);
-                          },
-                        ),
-                        ChoiceChip(
-                          label: const Text('Калории ↓'),
-                          selected: _selectedSortType == 3,
-                          onSelected: (selected) {
-                            setState(() => _selectedSortType = 3);
-                          },
+                        Icon(Icons.sort, color: AppTheme.primaryGreen),
+                        SizedBox(width: 8),
+                        Text(
+                          'Сортировка',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Заготовленные фильтры',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
-                      children: _presets.keys.map((presetName) {
-                        return ChoiceChip(
-                          label: Text(presetName),
-                          selected: _selectedPreset == presetName,
-                          onSelected: (selected) {
-                            if (selected) {
-                              _applyPreset(presetName);
-                            }
-                          },
+                      runSpacing: 8,
+                      children: [
+                        _buildSortChip('A-Z', 0),
+                        _buildSortChip('Z-A', 1),
+                        _buildSortChip('Калории ↑', 2),
+                        _buildSortChip('Калории ↓', 3),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Заготовленные фильтры
+                    const Row(
+                      children: [
+                        Icon(Icons.dashboard_customize, color: AppTheme.primaryGreen),
+                        SizedBox(width: 8),
+                        Text(
+                          'Быстрые фильтры',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.8,
+                      children: _presets.entries.map((entry) {
+                        final presetName = entry.key;
+                        final preset = entry.value;
+                        final isSelected = _selectedPreset == presetName;
+                        return InkWell(
+                          onTap: () => _applyPreset(presetName),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? preset.color.withOpacity(0.15)
+                                  : Colors.grey[100],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isSelected
+                                    ? preset.color
+                                    : Colors.transparent,
+                                width: 2,
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  preset.icon,
+                                  color: preset.color,
+                                  size: 28,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  presetName,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         );
                       }).toList(),
                     ),
                     const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                    // Ручные фильтры
+                    const Row(
                       children: [
-                        const Text(
-                          'Ручные фильтры',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        TextButton(
-                          onPressed: _clearFilters,
-                          child: const Text('Сбросить'),
+                        Icon(Icons.tune, color: AppTheme.primaryGreen),
+                        SizedBox(width: 8),
+                        Text(
+                          'Настроить вручную',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: _minCaloriesController,
                       decoration: const InputDecoration(
                         labelText: 'Минимум калорий',
-                        border: OutlineInputBorder(),
+                        suffixText: 'ккал',
+                        prefixIcon: Icon(Icons.trending_up),
                       ),
                       keyboardType: TextInputType.number,
                     ),
@@ -218,7 +324,8 @@ class _FilterSheetState extends State<FilterSheet> {
                       controller: _maxCaloriesController,
                       decoration: const InputDecoration(
                         labelText: 'Максимум калорий',
-                        border: OutlineInputBorder(),
+                        suffixText: 'ккал',
+                        prefixIcon: Icon(Icons.trending_down),
                       ),
                       keyboardType: TextInputType.number,
                     ),
@@ -226,8 +333,9 @@ class _FilterSheetState extends State<FilterSheet> {
                     TextField(
                       controller: _maxSugarController,
                       decoration: const InputDecoration(
-                        labelText: 'Максимум сахара (г)',
-                        border: OutlineInputBorder(),
+                        labelText: 'Максимум сахара',
+                        suffixText: 'г',
+                        prefixIcon: Icon(Icons.cake),
                       ),
                       keyboardType: TextInputType.number,
                     ),
@@ -235,42 +343,13 @@ class _FilterSheetState extends State<FilterSheet> {
                     TextField(
                       controller: _maxFatController,
                       decoration: const InputDecoration(
-                        labelText: 'Максимум жиров (г)',
-                        border: OutlineInputBorder(),
+                        labelText: 'Максимум жиров',
+                        suffixText: 'г',
+                        prefixIcon: Icon(Icons.opacity),
                       ),
                       keyboardType: TextInputType.number,
                     ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop({
-                            'minCalories': _minCaloriesController.text.isNotEmpty
-                                ? double.tryParse(_minCaloriesController.text)
-                                : null,
-                            'maxCalories': _maxCaloriesController.text.isNotEmpty
-                                ? double.tryParse(_maxCaloriesController.text)
-                                : null,
-                            'maxSugar': _maxSugarController.text.isNotEmpty
-                                ? double.tryParse(_maxSugarController.text)
-                                : null,
-                            'maxFat': _maxFatController.text.isNotEmpty
-                                ? double.tryParse(_maxFatController.text)
-                                : null,
-                            'sortType': _selectedSortType,
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: const Text(
-                          'Применить',
-                          style: TextStyle(fontSize: 16, color: Colors.white),
-                        ),
-                      ),
-                    ),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
@@ -280,4 +359,42 @@ class _FilterSheetState extends State<FilterSheet> {
       },
     );
   }
+
+  Widget _buildSortChip(String label, int value) {
+    final isSelected = _selectedSortType == value;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        if (selected) {
+          setState(() => _selectedSortType = value);
+        }
+      },
+      selectedColor: AppTheme.lightGreen,
+      backgroundColor: Colors.grey[200],
+      labelStyle: TextStyle(
+        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+        color: isSelected ? AppTheme.primaryGreen : Colors.black87,
+      ),
+    );
+  }
+}
+
+
+class PresetData {
+  final double? minCalories;
+  final double? maxCalories;
+  final double? maxSugar;
+  final double? maxFat;
+  final IconData icon;
+  final Color color;
+
+  PresetData({
+    this.minCalories,
+    this.maxCalories,
+    this.maxSugar,
+    this.maxFat,
+    required this.icon,
+    required this.color,
+  });
 }
