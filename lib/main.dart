@@ -12,6 +12,7 @@ class FruitApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Fruit App',
       theme: AppTheme.lightTheme,
       home: const HomeScreen(),
