@@ -124,7 +124,7 @@ Fruit App — это nutrition-tech приложение, которое пом�
 ---
 
 
-[PDF: скриншоты всех экранов и интерфейса]
+[PDF: скриншоты всех экранов и интерфейса](https://github.com/Lime228/surf-flutter-winter-internship-2025/blob/implementation/docs/result/FruitApp_Screens.pdf)
 
 
 
